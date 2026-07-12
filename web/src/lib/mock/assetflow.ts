@@ -214,7 +214,7 @@ export const categories: Category[] = [
 
 // ── Data: Employees ──────────────────────────────────────────────────────────
 export const employees: Employee[] = [
-  { id: 'e1', name: 'Aria Whitfield', email: 'aria.whitfield@assetflow.io', departmentId: 'd1', role: 'admin', title: 'Operations Director', status: 'active', joinedAt: '2021-02-11', phone: '+1 415 555 0110' },
+  { id: 'e1', name: 'Aria Whitfield', email: 'pateldax23056@gmail.com', departmentId: 'd1', role: 'admin', title: 'Operations Director', status: 'active', joinedAt: '2021-02-11', phone: '+1 415 555 0110' },
   { id: 'e2', name: 'Marcus Reyes', email: 'marcus.reyes@assetflow.io', departmentId: 'd1', role: 'asset_manager', title: 'Head of Assets', status: 'active', joinedAt: '2021-06-03', phone: '+1 415 555 0122' },
   { id: 'e3', name: 'Priya Nair', email: 'priya.nair@assetflow.io', departmentId: 'd2', role: 'employee', title: 'Senior Engineer', status: 'active', joinedAt: '2022-01-19', phone: '+1 415 555 0133' },
   { id: 'e4', name: 'Daniel Okafor', email: 'daniel.okafor@assetflow.io', departmentId: 'd2', role: 'dept_head', title: 'VP Engineering', status: 'active', joinedAt: '2020-09-27', phone: '+1 415 555 0144' },

@@ -48,8 +48,10 @@ async function main() {
   await prisma.category.deleteMany();
   await prisma.department.deleteMany();
 
-  // 2. Hash default password
+  // 2. Hash passwords. The primary admin persona (e1) gets its own credentials
+  // for the live demo; every other seeded user shares the default demo password.
   const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
+  const ownerPassword = await bcrypt.hash(process.env.SEED_OWNER_PASSWORD || 'Dax...2323', 10);
 
   // 3. Departments
   console.log(`Inserting ${departments.length} Departments...`);
@@ -87,7 +89,7 @@ async function main() {
         id: emp.id,
         name: emp.name,
         email: emp.email,
-        password: hashedPassword, // Everyone gets the same default password for demo
+        password: emp.id === 'e1' ? ownerPassword : hashedPassword,
         role: emp.role as any,
         title: emp.title,
         phone: emp.phone,
