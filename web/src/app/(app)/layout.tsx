@@ -55,7 +55,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
       {/* ============ SIDEBAR (always dark — the fixed "slate rail") ============ */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-slate-900/90 backdrop-blur-xl text-slate-100 flex flex-col transition-transform duration-300 ease-spring lg:translate-x-0 no-print border-r border-slate-800/60 shadow-2xl',
+          'fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-100 flex flex-col transition-transform duration-300 ease-spring lg:translate-x-0 no-print border-r border-slate-800/60 shadow-2xl',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
