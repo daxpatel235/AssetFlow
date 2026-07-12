@@ -77,6 +77,7 @@ const S = {
   }),
   returnAllocation: z.object({ allocationId: z.string().min(1), condition: z.enum(['new', 'good', 'fair', 'poor']).optional(), note: z.string().optional() }),
   createBooking: z.object({ resourceId: z.string().min(1), start: z.string().min(1), end: z.string().min(1), purpose: z.string().optional() }),
+  cancelBooking: z.object({ id: z.string().min(1) }),
   requestTransfer: z.object({ assetId: z.string().min(1), fromId: z.string().min(1), toId: z.string().min(1), reason: z.string().min(1) }),
   decideTransfer: z.object({ transferId: z.string().min(1), approve: z.boolean() }),
   raiseMaintenance: z.object({ assetId: z.string().min(1), issue: z.string().min(1), priority: z.enum(['low', 'medium', 'high', 'critical']) }),
@@ -215,6 +216,15 @@ export async function runAction(actor: SessionUser, action: string, payload: unk
       const status = now >= start.getTime() && now <= end.getTime() ? 'ongoing' : end.getTime() < now ? 'completed' : 'upcoming';
       await prisma.booking.create({ data: { assetId: a.id, employeeId: actor.id, startTime: start, endTime: end, purpose: p.purpose || 'New booking', status } });
       log(actor, `booked ${a.name} · ${p.start.slice(11)}–${p.end.slice(11)}`, 'booking');
+      return { ok: true };
+    }
+
+    case 'cancelBooking': {
+      const p = S.cancelBooking.parse(payload);
+      const b = await prisma.booking.findUnique({ where: { id: p.id } });
+      if (!b) throw ApiError.notFound('Booking not found.');
+      if (b.employeeId !== actor.id && !permissionsFor(actor.role).allocate) throw ApiError.forbidden('Only the booker or a manager can cancel this booking.');
+      await prisma.booking.update({ where: { id: b.id }, data: { status: 'cancelled' } });
       return { ok: true };
     }
 

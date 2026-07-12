@@ -68,7 +68,7 @@ function ScheduleGrid({ columns, onPick }: { columns: { key: string; label: stri
 
 export default function BookingsPage() {
   const toast = useToast();
-  const { v: _bv, createBooking } = useAF(); // subscribe so the calendar reflects DB writes
+  const { v: _bv, createBooking, cancelBooking } = useAF(); // subscribe so the calendar reflects DB writes
   const bookable = assets.filter((a) => a.bookable);
   const bookings = liveBookings; // DB-hydrated in place
   const [view, setView] = useState<'day' | 'week' | 'list'>('day');
@@ -196,7 +196,7 @@ export default function BookingsPage() {
       {/* Booking details drawer */}
       <Drawer open={!!picked} onClose={() => setPicked(null)} title={picked?.purpose} subtitle={picked ? getAsset(picked.resourceId)?.name : ''}
         footer={picked && picked.status === 'upcoming' ? (
-          <div className="flex gap-2"><Button variant="ghost" className="flex-1" onClick={() => { setBookings((p) => p.map((x) => x.id === picked.id ? { ...x, status: 'cancelled' } : x)); setPicked(null); toast.info('Booking cancelled'); }}>Cancel booking</Button><Button className="flex-1" onClick={() => { setPicked(null); toast.success('Reschedule saved'); }}>Reschedule</Button></div>
+          <div className="flex gap-2"><Button variant="ghost" className="flex-1" onClick={async () => { const id = picked.id; setPicked(null); try { await cancelBooking(id); toast.info('Booking cancelled'); } catch (err) { toast.error(err instanceof Error ? err.message : 'Could not cancel'); } }}>Cancel booking</Button><Button className="flex-1" onClick={() => { setPicked(null); toast.success('Reschedule saved'); }}>Reschedule</Button></div>
         ) : undefined}>
         {picked && (
           <div className="space-y-4">

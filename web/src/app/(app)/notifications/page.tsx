@@ -1,12 +1,13 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   UserCheck, Wrench, XCircle, CalendarCheck, Bell, CalendarX, ArrowLeftRight, AlertTriangle, ShieldAlert, CheckCheck, type LucideIcon,
 } from 'lucide-react';
 import { PageHeader, Card, Button, EmptyState, FilterTabs } from '@/components/ui/kit';
 import { useToast } from '@/providers/ToastProvider';
+import { useAF } from '@/lib/store/assetflow-store';
 import { timeAgo } from '@/lib/format';
-import { notifications as seed, type NotificationKind, type AppNotification } from '@/lib/mock/assetflow';
+import { notifications as liveNotifications, type NotificationKind } from '@/lib/mock/assetflow';
 
 const META: Record<NotificationKind, { icon: LucideIcon; cls: string }> = {
   asset_assigned: { icon: UserCheck, cls: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
@@ -22,14 +23,15 @@ const META: Record<NotificationKind, { icon: LucideIcon; cls: string }> = {
 
 export default function NotificationsPage() {
   const toast = useToast();
-  const [list, setList] = useState<AppNotification[]>(seed);
+  // DB-backed: read the hydrated array + subscribe to store bumps; actions persist.
+  const { v: _v, markAllRead, markRead } = useAF();
+  const list = liveNotifications;
   const [filter, setFilter] = useState('all');
 
   const unread = list.filter((n) => !n.read).length;
-  const shown = useMemo(() => list.filter((n) => (filter === 'all' ? true : filter === 'unread' ? !n.read : true)), [list, filter]);
+  const shown = list.filter((n) => (filter === 'all' ? true : !n.read));
 
-  const markAll = () => { setList((p) => p.map((n) => ({ ...n, read: true }))); toast.success('All caught up'); };
-  const toggle = (id: string) => setList((p) => p.map((n) => (n.id === id ? { ...n, read: !n.read } : n)));
+  const markAll = async () => { await markAllRead(); toast.success('All caught up'); };
 
   return (
     <div>
@@ -55,7 +57,9 @@ export default function NotificationsPage() {
                   <p className="text-sm text-fg-muted mt-0.5">{n.body}</p>
                   <p className="text-xs text-fg-muted mt-1.5">{timeAgo(n.at)}</p>
                 </div>
-                <button onClick={() => toggle(n.id)} className="text-xs font-semibold text-brand hover:underline shrink-0">{n.read ? 'Mark unread' : 'Mark read'}</button>
+                {n.read
+                  ? <span className="text-xs font-medium text-fg-muted shrink-0">Read</span>
+                  : <button onClick={() => { void markRead(n.id); }} className="text-xs font-semibold text-brand hover:underline shrink-0">Mark read</button>}
               </Card>
             );
           })}

@@ -78,6 +78,7 @@ type AFContext = {
   requestTransfer: (input: { assetId: string; fromId: string; toId: string; reason: string }) => Promise<void>;
   // bookings
   createBooking: (input: { resourceId: string; start: string; end: string; purpose?: string }) => Promise<void>;
+  cancelBooking: (id: string) => Promise<void>;
   decideTransfer: (transferId: string, approve: boolean) => Promise<void>;
   // maintenance
   raiseMaintenance: (input: { assetId: string; issue: string; priority: Priority }) => Promise<void>;
@@ -154,6 +155,7 @@ export function AssetFlowProvider({ children }: { children: ReactNode }) {
   }, [run]);
   const requestTransfer = useCallback(async (input: { assetId: string; fromId: string; toId: string; reason: string }) => { await run('requestTransfer', input); }, [run]);
   const createBooking = useCallback(async (input: { resourceId: string; start: string; end: string; purpose?: string }) => { await run('createBooking', input); }, [run]);
+  const cancelBooking = useCallback(async (id: string) => { await run('cancelBooking', { id }); }, [run]);
   const decideTransfer = useCallback(async (transferId: string, approve: boolean) => { await run('decideTransfer', { transferId, approve }); }, [run]);
 
   // ── Maintenance ─────────────────────────────────────────────────────────
@@ -187,14 +189,14 @@ export function AssetFlowProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AFContext>(() => ({
     v, ready, actingId, setActingId: setViewAsId, actingEmployee, role, perms,
-    registerAsset, allocate, returnAllocation, requestTransfer, createBooking, decideTransfer,
+    registerAsset, allocate, returnAllocation, requestTransfer, createBooking, cancelBooking, decideTransfer,
     raiseMaintenance, decideMaintenance, assignTechnician, startMaintenance, resolveMaintenance,
     setAuditResult, closeAudit, createAuditCycle,
     addDepartment, updateDepartment, toggleDepartmentStatus, addCategory, updateCategory,
     addEmployee, setEmployeeRole, toggleEmployeeStatus, markAllRead, markRead,
   }), [
     v, ready, actingId, actingEmployee, role, perms,
-    registerAsset, allocate, returnAllocation, requestTransfer, createBooking, decideTransfer,
+    registerAsset, allocate, returnAllocation, requestTransfer, createBooking, cancelBooking, decideTransfer,
     raiseMaintenance, decideMaintenance, assignTechnician, startMaintenance, resolveMaintenance,
     setAuditResult, closeAudit, createAuditCycle,
     addDepartment, updateDepartment, toggleDepartmentStatus, addCategory, updateCategory,
