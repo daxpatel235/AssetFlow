@@ -15,7 +15,7 @@ export const POST = route(async (req: Request) => {
   if (exists) throw ApiError.conflict('Email already registered.');
 
   const user = await prisma.user.create({
-    data: { name, email, password: await hashPassword(password), role: 'user' },
+    data: { name, email, password: await hashPassword(password), role: 'employee' },
   });
 
   await createSession({ id: user.id, name: user.name, email: user.email, role: user.role });
