@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------
+   Semantic color tokens. Neutrals flip light/dark via these CSS vars;
+   the brand (blue) lives in tailwind.config.ts. Light = warm ivory
+   canvas + white cards (the "Wolf slate + blue" look); dark = cohesive
+   slate. Components only reference tokens, so both themes come free.
+   ------------------------------------------------------------------ */
+:root {
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, ui-sans-serif, system-ui, Helvetica, Arial, sans-serif;
+  --canvas: 250 249 245;    /* #faf9f5 — warm off-white */
+  --surface: 255 255 255;   /* cards, topbar */
+  --surface-2: 244 242 236; /* subtle warm fill / hover */
+  --fg: 15 23 42;           /* slate-900 */
+  --fg-muted: 100 116 139;  /* slate-500 */
+  --border: 231 228 220;    /* warm hairline */
+  --shimmer: 255 255 255;   /* skeleton highlight (bright in light) */
+}
+
+.dark {
+  --canvas: 10 12 17;       /* near-black slate */
+  --surface: 20 24 33;
+  --surface-2: 29 34 46;
+  --fg: 226 232 240;
+  --fg-muted: 148 163 184;
+  --border: 41 48 62;
+  --shimmer: 148 163 184;   /* skeleton highlight (dim in dark) */
+}
+
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+html,
+body {
+  font-family: var(--font-sans);
+  background: rgb(var(--canvas));
+  color: rgb(var(--fg));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+}
+
+::selection {
+  background: rgb(37 99 235 / 0.18);
+}
+
+/* ------------------------------------------------------------------
+   Themed scrollbars — thin, unobtrusive, tinted to the border token.
+   Instant "premium app" cue vs. the default OS bars.
+   ------------------------------------------------------------------ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--fg-muted) / 0.28) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--fg-muted) / 0.28);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--fg-muted) / 0.5);
+  background-clip: content-box;
+}
+/* Dark slate sidebar keeps a dark-tuned scrollbar regardless of theme */
+.slate-scroll {
+  scrollbar-color: rgb(148 163 184 / 0.3) transparent;
+}
+.slate-scroll::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184 / 0.28);
+  background-clip: content-box;
+}
+
+/* Tabular figures — align numerals in stats, tables & money columns. */
+.tabular-nums,
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* ------------------------------------------------------------------
+   Motion — a small, tasteful vocabulary. Respects reduced-motion.
+   `.stagger` children fade/rise in sequence on first paint.
+   ------------------------------------------------------------------ */
+@keyframes enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.animate-enter {
+  animation: enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger > * {
+  animation: enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger > *:nth-child(1)  { animation-delay: 0.02s; }
+.stagger > *:nth-child(2)  { animation-delay: 0.06s; }
+.stagger > *:nth-child(3)  { animation-delay: 0.10s; }
+.stagger > *:nth-child(4)  { animation-delay: 0.14s; }
+.stagger > *:nth-child(5)  { animation-delay: 0.18s; }
+.stagger > *:nth-child(6)  { animation-delay: 0.22s; }
+.stagger > *:nth-child(7)  { animation-delay: 0.26s; }
+.stagger > *:nth-child(8)  { animation-delay: 0.30s; }
+
+/* Loading shimmer for <div class="skeleton" /> — dark-aware highlight. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgb(var(--surface-2));
+  border-radius: 0.5rem;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(var(--shimmer) / 0.12), transparent);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
