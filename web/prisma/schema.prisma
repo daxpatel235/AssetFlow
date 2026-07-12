@@ -1,5 +1,5 @@
 // PostgreSQL schema. Relational integrity + transactions — the reason to pick
-// Postgres over Mongo for a real ERP (orders → line items → invoices → ledgers).
+// Postgres over Mongo for a real ERP (orders -> line items -> invoices -> ledgers).
 generator client {
   provider = "prisma-client-js"
   // "native" for local dev; the musl target lets the client run in Alpine Docker.
@@ -11,70 +11,307 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ── Enums ────────────────────────────────────────────────────────────────────
+
 enum Role {
   admin
-  manager
-  user
+  asset_manager
+  dept_head
+  employee
 }
 
-enum ItemStatus {
+enum AssetStatus {
+  available
+  allocated
+  reserved
+  maintenance
+  lost
+  retired
+  disposed
+}
+
+enum Condition {
+  new
+  good
+  fair
+  poor
+}
+
+enum AllocationStatus {
   active
-  archived
+  returned
+  overdue
+}
+
+enum BookingStatus {
+  upcoming
+  ongoing
+  completed
+  cancelled
+}
+
+enum MaintenanceStatus {
+  pending
+  approved
+  rejected
+  assigned
+  in_progress
+  resolved
+}
+
+enum Priority {
+  low
+  medium
+  high
+  critical
+}
+
+enum AuditCycleStatus {
+  planned
+  active
+  closed
+}
+
+enum AuditResultType {
+  pending
+  verified
+  missing
+  damaged
 }
 
 enum ActivityAction {
   create
   update
   delete
+  transfer
+  audit
+}
+
+// ── Core Entities ────────────────────────────────────────────────────────────
+
+model Department {
+  id            String   @id @default(cuid())
+  name          String
+  code          String   @unique
+  status        String   @default("active")
+  
+  // Self-referential for hierarchy
+  parentId      String?
+  parent        Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children      Department[] @relation("DepartmentHierarchy")
+
+  // Department head
+  headId        String?
+  head          User?    @relation("DepartmentHead", fields: [headId], references: [id])
+  
+  employees     User[]   @relation("DepartmentEmployees")
+  assets        Asset[]  @relation("DepartmentAssets")
+  allocations   Allocation[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  icon        String   @default("box")
+  fields      Json?    // Custom schema fields (name, type, required)
+  
+  assets      Asset[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(user)
-  avatarUrl String?
-  isActive  Boolean  @default(true)
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  password     String
+  role         Role     @default(employee)
+  title        String?
+  phone        String?
+  avatarUrl    String?
+  isActive     Boolean  @default(true)
+  joinedAt     DateTime @default(now())
 
-  // Login activity — powers "welcome back" UX and dormancy cleanup, and lets an
-  // admin see who is actually active. Stamped on every successful login.
-  lastLoginAt DateTime?
-  loginCount  Int       @default(0)
+  departmentId String?
+  department   Department? @relation("DepartmentEmployees", fields: [departmentId], references: [id], onDelete: SetNull)
+  
+  // Inverse relations
+  headedDepartments Department[] @relation("DepartmentHead")
+  heldAssets        Asset[]      @relation("AssetHolder")
+  allocations       Allocation[]
+  bookings          Booking[]
+  reportedTickets   MaintenanceTicket[] @relation("TicketReporter")
+  assignedTickets   MaintenanceTicket[] @relation("TicketAssignee")
+  createdAudits     AuditCycle[]
+  scannedResults    AuditResult[]
 
-  // Password reset. Only the SHA-256 hash of the token is stored, so a DB leak
-  // can't be used to reset accounts; the raw token lives only in the email link.
+  // Authentication/Security
+  lastLoginAt       DateTime?
+  loginCount        Int       @default(0)
   resetToken        String?   @unique
   resetTokenExpires DateTime?
 
+  activities        ActivityLog[]
+  notifications     Notification[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  items         Item[]
-  activities    ActivityLog[]
-  notifications Notification[]
 }
 
-model Item {
-  id        String     @id @default(cuid())
+model Asset {
+  id              String      @id @default(cuid())
+  tag             String      @unique // e.g. AF-0001
+  name            String
+  serial          String?
+  status          AssetStatus @default(available)
+  condition       Condition   @default(new)
+  location        String?
+  acquisitionDate DateTime?
+  acquisitionCost Decimal?    @db.Decimal(12, 2)
+  bookable        Boolean     @default(false)
+  image           String?
+  warrantyEnds    DateTime?
+  customData      Json?
+
+  categoryId      String
+  category        Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  holderId        String?
+  holder          User?       @relation("AssetHolder", fields: [holderId], references: [id], onDelete: SetNull)
+
+  departmentId    String?
+  department      Department? @relation("DepartmentAssets", fields: [departmentId], references: [id], onDelete: SetNull)
+
+  allocations     Allocation[]
+  bookings        Booking[]
+  tickets         MaintenanceTicket[]
+  auditResults    AuditResult[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status, categoryId])
+  @@index([tag])
+}
+
+// ── Workflows ────────────────────────────────────────────────────────────────
+
+model Allocation {
+  id             String           @id @default(cuid())
+  allocatedAt    DateTime         @default(now())
+  expectedReturn DateTime?
+  returnedAt     DateTime?
+  status         AllocationStatus @default(active)
+  checkoutNote   String?
+  checkinNote    String?
+
+  assetId        String
+  asset          Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  employeeId     String
+  employee       User       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  departmentId   String?
+  department     Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([assetId, status])
+}
+
+model Booking {
+  id         String        @id @default(cuid())
+  startTime  DateTime
+  endTime    DateTime
+  purpose    String?
+  status     BookingStatus @default(upcoming)
+
+  assetId    String
+  asset      Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  employeeId String
+  employee   User   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Extremely fast lookup for calendar conflicts
+  @@index([assetId, startTime, endTime])
+}
+
+model MaintenanceTicket {
+  id          String            @id @default(cuid())
+  issue       String
+  priority    Priority          @default(medium)
+  status      MaintenanceStatus @default(pending)
+  reportedAt  DateTime          @default(now())
+  resolvedAt  DateTime?
+  cost        Decimal?          @db.Decimal(12, 2)
+  notes       String?
+
+  assetId     String
+  asset       Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  reporterId  String
+  reporter    User   @relation("TicketReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  assignedToId String?
+  assignedTo   User?  @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ── Auditing & Logs ──────────────────────────────────────────────────────────
+
+model AuditCycle {
+  id        String           @id @default(cuid())
   name      String
-  sku       String?
-  price     Decimal    @default(0) @db.Decimal(12, 2)
-  quantity  Int        @default(0)
-  status    ItemStatus @default(active)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  startDate DateTime         @default(now())
+  endDate   DateTime?
+  status    AuditCycleStatus @default(planned)
+  location  String?          // e.g. "HQ Server Room"
 
-  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Restrict)
 
-  // List queries always scope by owner and usually also filter by status
-  // (see /api/items). A compound index serves both the owner-only lookup (via
-  // its leading-field prefix) and the owner+status filter in one B-tree.
-  @@index([createdById, status])
+  results   AuditResult[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-// Append-only audit trail (denormalized userName so the feed needs no join).
+model AuditResult {
+  id               String          @id @default(cuid())
+  expectedLocation String?
+  actualLocation   String?
+  status           AuditResultType @default(pending)
+  scannedAt        DateTime?
+  notes            String?
+
+  cycleId          String
+  cycle            AuditCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+
+  assetId          String
+  asset            Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  scannedById      String?
+  scannedBy        User?      @relation(fields: [scannedById], references: [id], onDelete: SetNull)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@unique([cycleId, assetId])
+}
+
+// ── Generic Security & App Systems ───────────────────────────────────────────
+
 model ActivityLog {
   id        String         @id @default(cuid())
   action    ActivityAction
@@ -84,13 +321,12 @@ model ActivityLog {
   userName  String?
   createdAt DateTime       @default(now())
 
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-  userId String?
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
 }
 
-// Per-user in-app notification (drives the topbar bell).
 model Notification {
   id        String   @id @default(cuid())
   title     String
@@ -99,8 +335,8 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([userId, read])
 }
