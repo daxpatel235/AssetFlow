@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# builds
+.next/
+dist/
+build/
+out/
+
+# env (keep .env.example checked in)
+.env
+.env.local
+.env.*.local
+
+# test artifacts
+coverage/
+test-results/
+playwright-report/
+
+# os
+.DS_Store
+Thumbs.db
