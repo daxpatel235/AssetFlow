@@ -10,8 +10,6 @@ import { LoadingScreen } from '@/components/ui/feedback';
 import { GlobalSearch } from '@/components/layout/GlobalSearch';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { CheckInOut } from '@/components/assetflow/CheckInOut';
-import { IdentitySwitcher } from '@/components/assetflow/IdentitySwitcher';
-import { RoleBadge } from '@/components/assetflow/badges';
 import { AssetFlowProvider, useAF } from '@/lib/store/assetflow-store';
 import { NAV, NAV_SECTIONS } from '@/config/nav';
 import { cn } from '@/lib/cn';
@@ -129,7 +127,6 @@ function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex-1 min-w-0 max-w-md">
               <GlobalSearch />
             </div>
-            <IdentitySwitcher className="hidden lg:flex" />
             <CheckInOut />
             <NotificationBell />
             <IconButton onClick={toggle} title="Toggle theme" aria-label="Toggle theme">
@@ -156,14 +153,6 @@ function AppShell({ children }: { children: React.ReactNode }) {
                     <div className="px-4 py-3 border-b border-border">
                       <p className="text-sm font-semibold text-fg truncate">{user?.name}</p>
                       <p className="text-xs text-fg-muted truncate">{user?.email}</p>
-                    </div>
-                    <div className="px-4 py-3 border-b border-border lg:hidden">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-fg-muted">Acting as</span>
-                        <RoleBadge role={role} />
-                      </div>
-                      <IdentitySwitcher showIcon={false} className="w-full [&>div]:w-full [&_select]:w-full" />
-                      <p className="text-[11px] text-fg-muted mt-1.5">Switch role to preview access.</p>
                     </div>
                     <Link href="/settings" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-fg hover:bg-surface-2 transition border-b border-border">
                       <Settings className="w-4 h-4 text-fg-muted" /> Settings

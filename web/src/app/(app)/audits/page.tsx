@@ -50,8 +50,8 @@ function AuditsInner() {
   const discrepancies = auditCycles.reduce((n, c) => n + discrepanciesOf(c).length, 0);
   const closed = auditCycles.filter((c) => c.status === 'closed').length;
 
-  function closeCycle(cycleId: string) {
-    const missing = af.closeAudit(cycleId);
+  async function closeCycle(cycleId: string) {
+    const missing = await af.closeAudit(cycleId);
     toast.success(`Cycle closed · ${missing} asset(s) marked Lost`);
     setPickedId(null);
   }

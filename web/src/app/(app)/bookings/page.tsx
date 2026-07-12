@@ -8,7 +8,6 @@ import { BookingStatusBadge } from '@/components/assetflow/badges';
 import { useToast } from '@/providers/ToastProvider';
 import { bookings as seedBookings, assets, asset as getAsset, employeeName, type Booking, type BookingStatus } from '@/lib/mock/assetflow';
 
-const bookable = assets.filter((a) => a.bookable);
 const WIN_START = 8, WIN_END = 19; // schedule window hours
 const HOURS = Array.from({ length: WIN_END - WIN_START }, (_, i) => WIN_START + i);
 const sameDate = (iso: string, d: string) => iso.slice(0, 10) === d;
@@ -68,6 +67,7 @@ function ScheduleGrid({ columns, onPick }: { columns: { key: string; label: stri
 
 export default function BookingsPage() {
   const toast = useToast();
+  const bookable = assets.filter((a) => a.bookable);
   const [view, setView] = useState<'day' | 'week' | 'list'>('day');
   const [bookings, setBookings] = useState<Booking[]>(seedBookings);
   const [date, setDate] = useState('2026-07-12');

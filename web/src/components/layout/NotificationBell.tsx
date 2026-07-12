@@ -8,7 +8,8 @@ import {
 import { IconButton } from '@/components/ui/kit';
 import { timeAgo } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import { notifications as seed, type NotificationKind, type AppNotification } from '@/lib/mock/assetflow';
+import { useAF } from '@/lib/store/assetflow-store';
+import { notifications as liveNotifications, type NotificationKind } from '@/lib/mock/assetflow';
 
 const META: Record<NotificationKind, { icon: LucideIcon; cls: string }> = {
   asset_assigned: { icon: UserCheck, cls: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
@@ -23,10 +24,13 @@ const META: Record<NotificationKind, { icon: LucideIcon; cls: string }> = {
 };
 
 export function NotificationBell() {
+  // Subscribe to the store version so the bell re-renders after any mutation
+  // creates a notification; the `notifications` array is DB-hydrated in place.
+  const { v: _v, markAllRead } = useAF();
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<AppNotification[]>(seed);
+  const items = liveNotifications;
   const unread = items.filter((n) => !n.read).length;
-  const markAll = () => setItems((p) => p.map((n) => ({ ...n, read: true })));
+  const markAll = () => { void markAllRead(); };
 
   return (
     <div className="relative">

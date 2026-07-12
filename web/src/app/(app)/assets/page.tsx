@@ -177,7 +177,7 @@ export default function AssetsPage() {
       {/* Register Asset modal */}
       <Modal open={openNew} onClose={() => setOpenNew(false)} title="Register New Asset" width="max-w-2xl">
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
             const name = String(fd.get('name') || '').trim();
@@ -191,7 +191,7 @@ export default function AssetsPage() {
               else customData[f.name] = String(val || '');
             });
 
-            const tag = af.registerAsset({
+            const tag = await af.registerAsset({
               name, categoryId,
               serial: String(fd.get('serial') || '') || undefined,
               location: String(fd.get('location') || '') || undefined,

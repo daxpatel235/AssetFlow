@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   PackageCheck, CalendarClock, Wrench, ArrowLeftRight, ArrowRight, Inbox, MapPin, CalendarDays, Eye,
@@ -35,7 +36,10 @@ function SectionCard({ title, icon: Icon, count, action, children }: { title: st
 }
 
 export default function MyWorkspacePage() {
-  const { actingId: meId, setActingId: setMeId, v: _v } = useAF();
+  // "View as" is a local, read-only lens for this page (defaults to the signed-in
+  // user). It never changes server-enforced permissions.
+  const { actingId, v: _v } = useAF();
+  const [meId, setMeId] = useState(actingId);
   const me = employees.find((e) => e.id === meId) ?? employees[0];
 
   const held = assetsHeldBy(me.id);

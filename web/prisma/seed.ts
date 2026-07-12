@@ -159,8 +159,10 @@ async function main() {
         assetId: booking.resourceId,
         employeeId: booking.employeeId,
         status: booking.status as any,
-        startTime: new Date(booking.start),
-        endTime: new Date(booking.end),
+        // Store as UTC so bootstrap's toISOString().slice(0,16) round-trips the
+        // exact wall-clock time the calendar renders, regardless of server tz.
+        startTime: new Date(booking.start + 'Z'),
+        endTime: new Date(booking.end + 'Z'),
         purpose: booking.purpose,
       },
     });

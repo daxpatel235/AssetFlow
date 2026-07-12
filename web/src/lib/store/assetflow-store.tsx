@@ -128,7 +128,7 @@ export function AssetFlowProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { void hydrate(); }, [hydrate]);
 
-  const run = useCallback(async <R = unknown>(action: string, payload?: unknown): Promise<R> => {
+  const run = useCallback(async <R = unknown,>(action: string, payload?: unknown): Promise<R> => {
     const res = await api.post<{ ok: boolean; result?: R }>('/actions', { action, payload });
     await hydrate();
     return res.result as R;
