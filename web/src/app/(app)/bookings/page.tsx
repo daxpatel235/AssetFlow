@@ -6,7 +6,8 @@ import { Modal } from '@/components/ui/Modal';
 import { Drawer, Segmented, DetailRow, fmtTimeRange, fmtDayLabel } from '@/components/assetflow/ui';
 import { BookingStatusBadge } from '@/components/assetflow/badges';
 import { useToast } from '@/providers/ToastProvider';
-import { bookings as seedBookings, assets, asset as getAsset, employeeName, type Booking, type BookingStatus } from '@/lib/mock/assetflow';
+import { useAF } from '@/lib/store/assetflow-store';
+import { bookings as liveBookings, assets, asset as getAsset, employeeName, type Booking, type BookingStatus } from '@/lib/mock/assetflow';
 
 const WIN_START = 8, WIN_END = 19; // schedule window hours
 const HOURS = Array.from({ length: WIN_END - WIN_START }, (_, i) => WIN_START + i);
@@ -67,9 +68,10 @@ function ScheduleGrid({ columns, onPick }: { columns: { key: string; label: stri
 
 export default function BookingsPage() {
   const toast = useToast();
+  const { v: _bv, createBooking } = useAF(); // subscribe so the calendar reflects DB writes
   const bookable = assets.filter((a) => a.bookable);
+  const bookings = liveBookings; // DB-hydrated in place
   const [view, setView] = useState<'day' | 'week' | 'list'>('day');
-  const [bookings, setBookings] = useState<Booking[]>(seedBookings);
   const [date, setDate] = useState('2026-07-12');
   const [resourceId, setResourceId] = useState(bookable[0]?.id ?? '');
   const [picked, setPicked] = useState<Booking | null>(null);
@@ -105,14 +107,17 @@ export default function BookingsPage() {
     return [nd.getFullYear(), String(nd.getMonth() + 1).padStart(2, '0'), String(nd.getDate()).padStart(2, '0')].join('-');
   });
 
-  function submitBooking(e: React.FormEvent) {
+  async function submitBooking(e: React.FormEvent) {
     e.preventDefault();
-    if (conflict) { toast.error('Time slot overlaps an existing booking'); return; }
-    const nb: Booking = { id: 'b' + Math.random().toString(36).slice(2, 7), resourceId: fRes, employeeId: 'e3', start: `${fDate}T${fStart}`, end: `${fDate}T${fEnd}`, status: 'upcoming', purpose: fPurpose || 'New booking' };
-    setBookings((p) => [...p, nb]);
-    setOpen(false); setFPurpose('');
-    setView('day'); setDate(fDate);
-    toast.success('Booking confirmed');
+    if (conflict) { toast.error(conflict.kind === 'invalid' ? 'End time must be after the start time' : 'Time slot overlaps an existing booking'); return; }
+    try {
+      await createBooking({ resourceId: fRes, start: `${fDate}T${fStart}`, end: `${fDate}T${fEnd}`, purpose: fPurpose || 'New booking' });
+      setOpen(false); setFPurpose('');
+      setView('day'); setDate(fDate);
+      toast.success('Booking confirmed');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not create booking');
+    }
   }
 
   const upcoming = bookings.filter((b) => b.status !== 'completed' && b.status !== 'cancelled').sort((a, b) => +new Date(a.start) - +new Date(b.start));

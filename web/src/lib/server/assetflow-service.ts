@@ -76,6 +76,7 @@ const S = {
     condition: z.enum(['new', 'good', 'fair', 'poor']).optional(), note: z.string().optional(),
   }),
   returnAllocation: z.object({ allocationId: z.string().min(1), condition: z.enum(['new', 'good', 'fair', 'poor']).optional(), note: z.string().optional() }),
+  createBooking: z.object({ resourceId: z.string().min(1), start: z.string().min(1), end: z.string().min(1), purpose: z.string().optional() }),
   requestTransfer: z.object({ assetId: z.string().min(1), fromId: z.string().min(1), toId: z.string().min(1), reason: z.string().min(1) }),
   decideTransfer: z.object({ transferId: z.string().min(1), approve: z.boolean() }),
   raiseMaintenance: z.object({ assetId: z.string().min(1), issue: z.string().min(1), priority: z.enum(['low', 'medium', 'high', 'critical']) }),
@@ -194,6 +195,26 @@ export async function runAction(actor: SessionUser, action: string, payload: unk
         await prisma.transfer.update({ where: { id: t.id }, data: { status: 'rejected', approverId: actor.id } });
         log(actor, `rejected transfer of ${label(a)}`, 'allocation');
       }
+      return { ok: true };
+    }
+
+    // ── Bookings ──────────────────────────────────────────────────────────
+    case 'createBooking': {
+      must(actor, 'book');
+      const p = S.createBooking.parse(payload);
+      const a = await getAsset(prisma, p.resourceId);
+      if (!a.bookable) throw ApiError.badRequest('This asset is not bookable.');
+      // Times arrive as wall-clock 'YYYY-MM-DDTHH:mm'; store as UTC so the
+      // calendar round-trips the exact slot (matches how bootstrap reads them).
+      const start = new Date(p.start + 'Z');
+      const end = new Date(p.end + 'Z');
+      if (!(end.getTime() > start.getTime())) throw ApiError.badRequest('End time must be after the start time.');
+      const clash = await prisma.booking.findFirst({ where: { assetId: a.id, status: { not: 'cancelled' }, startTime: { lt: end }, endTime: { gt: start } } });
+      if (clash) throw ApiError.conflict('That time slot overlaps an existing booking.');
+      const now = Date.now();
+      const status = now >= start.getTime() && now <= end.getTime() ? 'ongoing' : end.getTime() < now ? 'completed' : 'upcoming';
+      await prisma.booking.create({ data: { assetId: a.id, employeeId: actor.id, startTime: start, endTime: end, purpose: p.purpose || 'New booking', status } });
+      log(actor, `booked ${a.name} · ${p.start.slice(11)}–${p.end.slice(11)}`, 'booking');
       return { ok: true };
     }
 
