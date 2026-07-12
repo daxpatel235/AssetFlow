@@ -156,6 +156,7 @@ export type NotificationKind =
   | 'audit_flagged';
 export type AppNotification = {
   id: string;
+  userId?: string; // recipient — seeds fan notifications out across personas
   kind: NotificationKind;
   title: string;
   body: string;
@@ -289,8 +290,10 @@ export const bookings: Booking[] = (() => {
     // Add 4-6 bookings per day
     for (let i = 0; i < 5; i++) {
       const startHour = 9 + i * 2;
-      const rId = ['a10', 'a11', 'a7', 'a13', 'a9', 'a12'][i % 6];
-      const eId = ['e4', 'e8', 'e9', 'e5', 'e6', 'e2', 'e3', 'e11'][i % 8];
+      const rId = ['a10', 'a11', 'a7', 'a13', 'a9', 'a12'][(offset + i + 28) % 6];
+      // Spread bookings across every persona (incl. admin e1) so each user's
+      // "My Workspace" calendar has entries — vary by day (offset) AND slot (i).
+      const eId = ['e4', 'e8', 'e9', 'e5', 'e6', 'e2', 'e3', 'e11', 'e1', 'e7', 'e10'][(offset + i + 28) % 11];
       
       b.push({
         id: 'b' + (idCounter++),
@@ -383,14 +386,41 @@ export const auditCycles: AuditCycle[] = [
 
 // ── Data: Notifications ──────────────────────────────────────────────────────
 export const notifications: AppNotification[] = [
-  { id: 'n1', kind: 'overdue_return', title: 'Overdue return', body: 'MacBook Pro 16" (AF-0001) held by Priya Nair is 7 days overdue.', at: '2026-07-12T08:10', read: false },
-  { id: 'n2', kind: 'transfer_approved', title: 'Transfer approved', body: 'Tesla Model 3 (AF-0009) transfer to Facilities approved.', at: '2026-07-12T07:45', read: false },
-  { id: 'n3', kind: 'audit_flagged', title: 'Audit discrepancy', body: 'iPad Pro (AF-0020) flagged missing in Q3 HQ Floor 3 Audit.', at: '2026-07-11T16:30', read: false },
-  { id: 'n4', kind: 'maintenance_approved', title: 'Maintenance approved', body: 'ThinkPad X1 (AF-0004) repair approved and assigned to Lena Fischer.', at: '2026-07-09T10:05', read: true },
-  { id: 'n5', kind: 'booking_reminder', title: 'Booking reminder', body: 'Budget review in Aspen room starts in 30 minutes.', at: '2026-07-12T10:00', read: false },
-  { id: 'n6', kind: 'asset_assigned', title: 'Asset assigned', body: 'Dell Latitude 5540 (AF-0016) assigned to you.', at: '2026-07-08T09:20', read: true },
-  { id: 'n7', kind: 'booking_cancelled', title: 'Booking cancelled', body: 'Birch room booking at 16:00 was cancelled.', at: '2026-07-12T09:15', read: true },
-  { id: 'n8', kind: 'maintenance_rejected', title: 'Maintenance rejected', body: 'Monitor dead-pixel request (AF-0002) was rejected.', at: '2026-07-06T11:00', read: true },
+  // Aria Whitfield (e1) — Admin / Operations Director (primary demo persona)
+  { id: 'n1', userId: 'e1', kind: 'overdue_return', title: 'Overdue return', body: 'MacBook Pro 16" (AF-0001) held by Priya Nair is 7 days overdue.', at: '2026-07-12T08:10', read: false },
+  { id: 'n2', userId: 'e1', kind: 'transfer_approved', title: 'Transfer approved', body: 'Tesla Model 3 (AF-0009) transfer to Facilities approved.', at: '2026-07-12T07:45', read: false },
+  { id: 'n3', userId: 'e1', kind: 'audit_flagged', title: 'Audit discrepancy', body: 'iPad Pro (AF-0020) flagged missing in Q3 HQ Floor 3 Audit.', at: '2026-07-11T16:30', read: false },
+  { id: 'n4', userId: 'e1', kind: 'booking_reminder', title: 'Booking reminder', body: 'Budget review in Aspen room starts in 30 minutes.', at: '2026-07-12T10:00', read: false },
+  { id: 'n5', userId: 'e1', kind: 'maintenance_approved', title: 'Maintenance approved', body: 'ThinkPad X1 (AF-0004) repair approved and assigned to Lena Fischer.', at: '2026-07-09T10:05', read: true },
+
+  // Marcus Reyes (e2) — Asset Manager (approver inbox)
+  { id: 'n6', userId: 'e2', kind: 'transfer_approved', title: 'New transfer request', body: 'Priya Nair requested a transfer of MacBook Pro 16" (AF-0001).', at: '2026-07-10T13:22', read: false },
+  { id: 'n7', userId: 'e2', kind: 'maintenance_approved', title: 'New maintenance request', body: 'James Carter raised a critical issue on Ford Transit (AF-0008).', at: '2026-07-11T14:12', read: false },
+  { id: 'n8', userId: 'e2', kind: 'asset_assigned', title: 'Asset assigned', body: 'Tesla Model 3 (AF-0009) assigned to you.', at: '2026-05-20T09:30', read: true },
+
+  // Priya Nair (e3) — Employee / Senior Engineer
+  { id: 'n9', userId: 'e3', kind: 'asset_assigned', title: 'Asset assigned', body: 'MacBook Pro 16" (AF-0001) assigned to you.', at: '2025-06-01T09:00', read: true },
+  { id: 'n10', userId: 'e3', kind: 'overdue_return', title: 'Return overdue', body: 'Your MacBook Pro 16" (AF-0001) is overdue for return.', at: '2026-07-12T08:12', read: false },
+  { id: 'n11', userId: 'e3', kind: 'maintenance_rejected', title: 'Maintenance rejected', body: 'Your dead-pixel request for Dell UltraSharp (AF-0002) was rejected.', at: '2026-07-06T11:00', read: true },
+
+  // Daniel Okafor (e4) — Dept Head / Engineering
+  { id: 'n12', userId: 'e4', kind: 'booking_reminder', title: 'Booking reminder', body: 'Engineering standup in Aspen room starts soon.', at: '2026-07-12T08:45', read: false },
+  { id: 'n13', userId: 'e4', kind: 'booking_cancelled', title: 'Booking cancelled', body: 'Birch room booking at 16:00 was cancelled.', at: '2026-07-12T09:15', read: true },
+
+  // Lena Fischer (e7) — Maintenance Technician
+  { id: 'n14', userId: 'e7', kind: 'maintenance_approved', title: 'Repair assigned to you', body: 'You were assigned the ThinkPad X1 (AF-0004) keyboard repair.', at: '2026-07-09T10:06', read: false },
+  { id: 'n15', userId: 'e7', kind: 'maintenance_approved', title: 'Repair assigned to you', body: 'Torque Wrench Set (AF-0015) recalibration assigned to you.', at: '2026-07-10T10:15', read: true },
+
+  // Owen Bright (e8) — Dept Head / Finance
+  { id: 'n16', userId: 'e8', kind: 'asset_assigned', title: 'Asset assigned', body: 'BMW X5 Fleet (AF-0024) assigned to you.', at: '2026-06-10T09:00', read: true },
+  { id: 'n17', userId: 'e8', kind: 'booking_reminder', title: 'Booking reminder', body: 'Budget review starts in 30 minutes.', at: '2026-07-12T09:30', read: false },
+
+  // Nadia Haddad (e11) — Employee / Data Engineer
+  { id: 'n18', userId: 'e11', kind: 'asset_assigned', title: 'Asset assigned', body: 'Dell Latitude 5540 (AF-0016) assigned to you.', at: '2026-04-02T09:20', read: true },
+  { id: 'n19', userId: 'e11', kind: 'overdue_return', title: 'Return overdue', body: 'Your Dell Latitude 5540 (AF-0016) is overdue for return.', at: '2026-07-12T08:15', read: false },
+
+  // James Carter (e6) — Facilities Manager
+  { id: 'n20', userId: 'e6', kind: 'transfer_approved', title: 'Transfer approved', body: 'Tesla Model 3 (AF-0009) transferred to Facilities.', at: '2026-07-06T15:00', read: false },
 ];
 
 // ── Data: Activity feed ──────────────────────────────────────────────────────
@@ -405,6 +435,14 @@ export const activity: ActivityEvent[] = [
   { id: 'ac8', actorId: 'e11', action: 'requested transfer of', target: 'MacBook Pro 16" (AF-0001)', module: 'allocation', at: '2026-07-10T13:20' },
   { id: 'ac9', actorId: 'e5', action: 'returned', target: 'Projector Epson EB (AF-0013)', module: 'allocation', at: '2026-05-29T17:05' },
   { id: 'ac10', actorId: 'e2', action: 'allocated', target: 'DSLR Camera Kit (AF-0014) → Sofia Lindqvist', module: 'allocation', at: '2026-06-25T10:15' },
+  { id: 'ac11', actorId: 'e2', action: 'allocated', target: 'BMW X5 Fleet (AF-0024) → Owen Bright', module: 'allocation', at: '2026-06-10T09:05' },
+  { id: 'ac12', actorId: 'e7', action: 'resolved maintenance for', target: 'Herman Miller Aeron (AF-0005)', module: 'maintenance', at: '2026-06-24T14:20' },
+  { id: 'ac13', actorId: 'e10', action: 'created audit cycle', target: 'Fleet Depot A/B Verification', module: 'audit', at: '2026-07-11T09:00' },
+  { id: 'ac14', actorId: 'e4', action: 'booked', target: 'Birch room · 11:00–12:00', module: 'booking', at: '2026-07-12T07:30' },
+  { id: 'ac15', actorId: 'e1', action: 'reactivated', target: 'Tom Schneider', module: 'org', at: '2026-07-05T10:00' },
+  { id: 'ac16', actorId: 'e2', action: 'rejected maintenance for', target: 'Dell UltraSharp 27" (AF-0002)', module: 'maintenance', at: '2026-07-06T11:00' },
+  { id: 'ac17', actorId: 'e10', action: 'verified', target: 'iPhone 15 Pro (AF-0003)', module: 'audit', at: '2026-04-02T13:15' },
+  { id: 'ac18', actorId: 'e6', action: 'requested transfer of', target: 'Tesla Model 3 (AF-0009)', module: 'allocation', at: '2026-07-06T14:00' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

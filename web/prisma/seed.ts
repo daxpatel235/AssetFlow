@@ -232,16 +232,16 @@ async function main() {
     });
   }
 
-  // 12. Notifications — seeded onto the admin persona (e1) so the bell is alive
-  // in the demo. Going forward, every workflow mutation creates real per-user
-  // notifications for the actual recipient.
+  // 12. Notifications — fanned out across personas (n.userId) so EVERY role's
+  // bell + notifications page is alive in the demo, falling back to the admin.
+  // Going forward, every workflow mutation creates real per-user notifications.
   const adminId = employees[0].id;
   console.log(`Inserting ${notifications.length} Notifications...`);
   for (const n of notifications) {
     await prisma.notification.create({
       data: {
         id: n.id,
-        userId: adminId,
+        userId: n.userId ?? adminId,
         kind: n.kind,
         title: n.title,
         body: n.body,
