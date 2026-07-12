@@ -42,16 +42,17 @@ persist. **typecheck clean · prod build passes.**
 **Seed = rich demo data in every corner** (`npm run db:seed`): 6 depts, 5 categories,
 12 users, 24 assets, 10 allocations, 145 bookings (spread across **every** persona),
 6 maintenance (all statuses), 3 audit cycles, 4 transfers, **20 notifications fanned across
-8 personas**, 18 activity entries. All 12 users share password `Owner@2026!`.
+8 personas**, 18 activity entries. The primary admin persona has its own credentials
+(below); the other 11 users share password `Owner@2026!`.
 
-## 🔑 Demo logins (all password `Owner@2026!`)
-| Role | Email | Shows off |
-|---|---|---|
-| Admin | `aria.whitfield@assetflow.io` | Everything: org setup, approvals, reports, activity |
-| Asset Manager | `marcus.reyes@assetflow.io` | Register/allocate, approve transfers & maintenance, audits |
-| Dept Head | `daniel.okafor@assetflow.io` | Dept view, approvals, bookings |
-| Employee | `priya.nair@assetflow.io` | My Workspace (held assets, overdue, bookings, transfers), raise maintenance |
-| Technician | `lena.fischer@assetflow.io` | Assigned repairs (start/resolve) |
+## 🔑 Demo logins
+| Role | Email | Password | Shows off |
+|---|---|---|---|
+| **Admin (you)** | `pateldax23056@gmail.com` | `Dax...2323` | Everything: org setup, approvals, reports, activity |
+| Asset Manager | `marcus.reyes@assetflow.io` | `Owner@2026!` | Register/allocate, approve transfers & maintenance, audits |
+| Dept Head | `daniel.okafor@assetflow.io` | `Owner@2026!` | Dept view, approvals, bookings |
+| Employee | `priya.nair@assetflow.io` | `Owner@2026!` | My Workspace (held assets, overdue, bookings, transfers), raise maintenance |
+| Technician | `lena.fischer@assetflow.io` | `Owner@2026!` | Assigned repairs (start/resolve) |
 
 ## 🎤 Demo punchline
 Do a workflow (approve a maintenance request → asset goes Under Maintenance everywhere),

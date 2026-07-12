@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 // Seeded admin from the mock data
-const ADMIN_EMAIL = 'aria.whitfield@assetflow.io';
-const ADMIN_PASSWORD = 'Owner@2026!';
+const ADMIN_EMAIL = 'pateldax23056@gmail.com';
+const ADMIN_PASSWORD = 'Dax...2323';
 
 test('unauthenticated user is redirected to login', async ({ page }) => {
   await page.goto('/dashboard');
