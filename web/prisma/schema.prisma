@@ -256,6 +256,31 @@ model Booking {
   @@index([assetId, startTime, endTime])
 }
 
+model Transfer {
+  id          String         @id @default(cuid())
+  requestedAt DateTime       @default(now())
+  status      TransferStatus @default(requested)
+  reason      String
+
+  assetId     String
+  asset       Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  fromId      String
+  from        User   @relation("TransferFrom", fields: [fromId], references: [id], onDelete: Cascade)
+
+  toId        String
+  to          User   @relation("TransferTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  approverId  String?
+  approver    User?  @relation("TransferApprover", fields: [approverId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([assetId])
+}
+
 model MaintenanceTicket {
   id          String            @id @default(cuid())
   issue       String
@@ -287,7 +312,8 @@ model AuditCycle {
   startDate DateTime         @default(now())
   endDate   DateTime?
   status    AuditCycleStatus @default(planned)
-  location  String?          // e.g. "HQ Server Room"
+  location  String?          // scope, e.g. "HQ · Floor 3"
+  auditorIds String[]        @default([]) // users assigned to physically verify
 
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Restrict)
@@ -340,6 +366,7 @@ model ActivityLog {
 
 model Notification {
   id        String   @id @default(cuid())
+  kind      String   @default("info") // drives the icon in the bell/list UI
   title     String
   body      String?
   link      String?

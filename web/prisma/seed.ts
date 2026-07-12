@@ -10,7 +10,21 @@ import {
   bookings,
   maintenance,
   auditCycles as audits,
+  transfers,
+  notifications,
+  activity,
+  employeeName,
 } from '../src/lib/mock/assetflow';
+import type { ActivityAction } from '@prisma/client';
+
+// Map a mock activity "module" to the coarse ActivityLog action enum. The
+// human-readable phrase is preserved verbatim in `summary`.
+function activityAction(module: string): ActivityAction {
+  if (module === 'audit') return 'audit';
+  if (module === 'allocation') return 'transfer';
+  if (module === 'asset') return 'create';
+  return 'update';
+}
 
 const prisma = new PrismaClient();
 
@@ -21,9 +35,12 @@ async function main() {
 
   // 1. Clear existing data (in correct relational order to avoid FK errors)
   console.log('Clearing existing data...');
+  await prisma.notification.deleteMany();
+  await prisma.activityLog.deleteMany();
   await prisma.auditResult.deleteMany();
   await prisma.auditCycle.deleteMany();
   await prisma.maintenanceTicket.deleteMany();
+  await prisma.transfer.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.allocation.deleteMany();
   await prisma.asset.deleteMany();
@@ -176,6 +193,8 @@ async function main() {
         id: audit.id,
         name: audit.name,
         status: audit.status as any,
+        location: audit.scope,
+        auditorIds: audit.auditorIds,
         startDate: new Date(audit.from),
         endDate: new Date(audit.to),
         createdById: audit.auditorIds[0] || employees[0].id,
@@ -192,6 +211,59 @@ async function main() {
         },
       });
     }
+  }
+
+  // 11. Transfers (asset custody change requests + their approval history)
+  console.log(`Inserting ${transfers.length} Transfers...`);
+  for (const t of transfers) {
+    await prisma.transfer.create({
+      data: {
+        id: t.id,
+        assetId: t.assetId,
+        fromId: t.fromId,
+        toId: t.toId,
+        approverId: t.approverId ?? null,
+        reason: t.reason,
+        status: t.status as any,
+        requestedAt: new Date(t.requestedAt),
+      },
+    });
+  }
+
+  // 12. Notifications — seeded onto the admin persona (e1) so the bell is alive
+  // in the demo. Going forward, every workflow mutation creates real per-user
+  // notifications for the actual recipient.
+  const adminId = employees[0].id;
+  console.log(`Inserting ${notifications.length} Notifications...`);
+  for (const n of notifications) {
+    await prisma.notification.create({
+      data: {
+        id: n.id,
+        userId: adminId,
+        kind: n.kind,
+        title: n.title,
+        body: n.body,
+        read: n.read,
+        createdAt: new Date(n.at),
+      },
+    });
+  }
+
+  // 13. Activity log — the org-wide audit trail. The mock's human phrase +
+  // target are preserved verbatim in `summary`; `entity` holds the module.
+  console.log(`Inserting ${activity.length} Activity entries...`);
+  for (const a of activity) {
+    await prisma.activityLog.create({
+      data: {
+        id: a.id,
+        action: activityAction(a.module),
+        entity: a.module,
+        summary: `${a.action} ${a.target}`,
+        userName: employeeName(a.actorId),
+        userId: a.actorId,
+        createdAt: new Date(a.at),
+      },
+    });
   }
 
   console.log('✅ Seeding complete!');
