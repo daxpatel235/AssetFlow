@@ -1,0 +1,36 @@
+# Production track: Postgres + the Next.js app.
+#   docker compose up --build
+#   docker compose exec web npm run db:seed
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: odoo_web
+    ports:
+      - '5432:5432'
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/odoo_web?schema=public
+      JWT_SECRET: change_me_to_a_long_random_secret
+      NODE_ENV: production
+
+volumes:
+  pg_data:

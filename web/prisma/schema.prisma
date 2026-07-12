@@ -1,0 +1,106 @@
+// PostgreSQL schema. Relational integrity + transactions — the reason to pick
+// Postgres over Mongo for a real ERP (orders → line items → invoices → ledgers).
+generator client {
+  provider = "prisma-client-js"
+  // "native" for local dev; the musl target lets the client run in Alpine Docker.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  manager
+  user
+}
+
+enum ItemStatus {
+  active
+  archived
+}
+
+enum ActivityAction {
+  create
+  update
+  delete
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(user)
+  avatarUrl String?
+  isActive  Boolean  @default(true)
+
+  // Login activity — powers "welcome back" UX and dormancy cleanup, and lets an
+  // admin see who is actually active. Stamped on every successful login.
+  lastLoginAt DateTime?
+  loginCount  Int       @default(0)
+
+  // Password reset. Only the SHA-256 hash of the token is stored, so a DB leak
+  // can't be used to reset accounts; the raw token lives only in the email link.
+  resetToken        String?   @unique
+  resetTokenExpires DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items         Item[]
+  activities    ActivityLog[]
+  notifications Notification[]
+}
+
+model Item {
+  id        String     @id @default(cuid())
+  name      String
+  sku       String?
+  price     Decimal    @default(0) @db.Decimal(12, 2)
+  quantity  Int        @default(0)
+  status    ItemStatus @default(active)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+
+  // List queries always scope by owner and usually also filter by status
+  // (see /api/items). A compound index serves both the owner-only lookup (via
+  // its leading-field prefix) and the owner+status filter in one B-tree.
+  @@index([createdById, status])
+}
+
+// Append-only audit trail (denormalized userName so the feed needs no join).
+model ActivityLog {
+  id        String         @id @default(cuid())
+  action    ActivityAction
+  entity    String
+  entityId  String?
+  summary   String?
+  userName  String?
+  createdAt DateTime       @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId String?
+
+  @@index([createdAt])
+}
+
+// Per-user in-app notification (drives the topbar bell).
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  body      String?
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([userId])
+}
