@@ -214,7 +214,7 @@ export const categories: Category[] = [
 
 // ── Data: Employees ──────────────────────────────────────────────────────────
 export const employees: Employee[] = [
-  { id: 'e1', name: 'Aria Whitfield', email: 'pateldax23056@gmail.com', departmentId: 'd1', role: 'admin', title: 'Operations Director', status: 'active', joinedAt: '2021-02-11', phone: '+1 415 555 0110' },
+  { id: 'e1', name: 'Dax Patel', email: 'pateldax23056@gmail.com', departmentId: 'd1', role: 'admin', title: 'Operations Director', status: 'active', joinedAt: '2021-02-11', phone: '+1 415 555 0110' },
   { id: 'e2', name: 'Marcus Reyes', email: 'marcus.reyes@assetflow.io', departmentId: 'd1', role: 'asset_manager', title: 'Head of Assets', status: 'active', joinedAt: '2021-06-03', phone: '+1 415 555 0122' },
   { id: 'e3', name: 'Priya Nair', email: 'priya.nair@assetflow.io', departmentId: 'd2', role: 'employee', title: 'Senior Engineer', status: 'active', joinedAt: '2022-01-19', phone: '+1 415 555 0133' },
   { id: 'e4', name: 'Daniel Okafor', email: 'daniel.okafor@assetflow.io', departmentId: 'd2', role: 'dept_head', title: 'VP Engineering', status: 'active', joinedAt: '2020-09-27', phone: '+1 415 555 0144' },
@@ -386,7 +386,7 @@ export const auditCycles: AuditCycle[] = [
 
 // ── Data: Notifications ──────────────────────────────────────────────────────
 export const notifications: AppNotification[] = [
-  // Aria Whitfield (e1) — Admin / Operations Director (primary demo persona)
+  // Dax Patel (e1) — Admin / Operations Director (primary demo persona)
   { id: 'n1', userId: 'e1', kind: 'overdue_return', title: 'Overdue return', body: 'MacBook Pro 16" (AF-0001) held by Priya Nair is 7 days overdue.', at: '2026-07-12T08:10', read: false },
   { id: 'n2', userId: 'e1', kind: 'transfer_approved', title: 'Transfer approved', body: 'Tesla Model 3 (AF-0009) transfer to Facilities approved.', at: '2026-07-12T07:45', read: false },
   { id: 'n3', userId: 'e1', kind: 'audit_flagged', title: 'Audit discrepancy', body: 'iPad Pro (AF-0020) flagged missing in Q3 HQ Floor 3 Audit.', at: '2026-07-11T16:30', read: false },

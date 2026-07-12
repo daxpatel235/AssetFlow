@@ -131,6 +131,17 @@ export async function runAction(actor: SessionUser, action: string, payload: unk
       must(actor, 'allocate');
       const p = S.allocate.parse(payload);
       const a = await getAsset(prisma, p.assetId);
+      // Spec conflict rule: an asset can only be allocated when Available. If it's
+      // already held, the caller must raise a transfer request instead. Enforced
+      // server-side so double-allocation is impossible even via a direct API call.
+      if (a.status !== 'available') {
+        const holder = a.holderId ? await prisma.user.findUnique({ where: { id: a.holderId }, select: { name: true } }) : null;
+        throw ApiError.conflict(
+          holder
+            ? `${a.name} (${a.tag}) is currently held by ${holder.name} — request a transfer instead.`
+            : `${a.name} (${a.tag}) is ${a.status} and can't be allocated right now.`
+        );
+      }
       if (p.targetType === 'employee') {
         if (!p.employeeId) throw ApiError.badRequest('Select an employee.');
         await prisma.$transaction([
