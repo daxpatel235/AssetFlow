@@ -50,6 +50,13 @@ enum BookingStatus {
   cancelled
 }
 
+enum TransferStatus {
+  requested
+  approved
+  rejected
+  completed
+}
+
 enum MaintenanceStatus {
   pending
   approved
@@ -149,6 +156,9 @@ model User {
   assignedTickets   MaintenanceTicket[] @relation("TicketAssignee")
   createdAudits     AuditCycle[]
   scannedResults    AuditResult[]
+  transfersFrom     Transfer[]  @relation("TransferFrom")
+  transfersTo       Transfer[]  @relation("TransferTo")
+  transfersApproved Transfer[]  @relation("TransferApprover")
 
   // Authentication/Security
   lastLoginAt       DateTime?
@@ -191,6 +201,7 @@ model Asset {
   bookings        Booking[]
   tickets         MaintenanceTicket[]
   auditResults    AuditResult[]
+  transfers       Transfer[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

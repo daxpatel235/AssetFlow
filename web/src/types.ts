@@ -1,6 +1,8 @@
 // Client-facing types. Kept separate from Prisma so the client bundle never
-// imports the server Prisma client.
-export type Role = 'admin' | 'manager' | 'user';
+// imports the server Prisma client. These role strings MUST match the Prisma
+// `Role` enum (prisma/schema.prisma) exactly — they are the single vocabulary
+// shared by the JWT session, the RBAC guards, and the UI.
+export type Role = 'admin' | 'asset_manager' | 'dept_head' | 'employee';
 
 export type AuthUser = {
   id: string;
