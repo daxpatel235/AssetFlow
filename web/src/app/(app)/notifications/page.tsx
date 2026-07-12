@@ -1,0 +1,68 @@
+'use client';
+import { useMemo, useState } from 'react';
+import {
+  UserCheck, Wrench, XCircle, CalendarCheck, Bell, CalendarX, ArrowLeftRight, AlertTriangle, ShieldAlert, CheckCheck, type LucideIcon,
+} from 'lucide-react';
+import { PageHeader, Card, Button, EmptyState, FilterTabs } from '@/components/ui/kit';
+import { useToast } from '@/providers/ToastProvider';
+import { timeAgo } from '@/lib/format';
+import { notifications as seed, type NotificationKind, type AppNotification } from '@/lib/mock/assetflow';
+
+const META: Record<NotificationKind, { icon: LucideIcon; cls: string }> = {
+  asset_assigned: { icon: UserCheck, cls: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
+  maintenance_approved: { icon: Wrench, cls: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+  maintenance_rejected: { icon: XCircle, cls: 'bg-red-500/10 text-red-600 dark:text-red-400' },
+  booking_confirmed: { icon: CalendarCheck, cls: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+  booking_reminder: { icon: Bell, cls: 'bg-brand/10 text-brand' },
+  booking_cancelled: { icon: CalendarX, cls: 'bg-red-500/10 text-red-600 dark:text-red-400' },
+  transfer_approved: { icon: ArrowLeftRight, cls: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' },
+  overdue_return: { icon: AlertTriangle, cls: 'bg-red-500/10 text-red-600 dark:text-red-400' },
+  audit_flagged: { icon: ShieldAlert, cls: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+};
+
+export default function NotificationsPage() {
+  const toast = useToast();
+  const [list, setList] = useState<AppNotification[]>(seed);
+  const [filter, setFilter] = useState('all');
+
+  const unread = list.filter((n) => !n.read).length;
+  const shown = useMemo(() => list.filter((n) => (filter === 'all' ? true : filter === 'unread' ? !n.read : true)), [list, filter]);
+
+  const markAll = () => { setList((p) => p.map((n) => ({ ...n, read: true }))); toast.success('All caught up'); };
+  const toggle = (id: string) => setList((p) => p.map((n) => (n.id === id ? { ...n, read: !n.read } : n)));
+
+  return (
+    <div>
+      <PageHeader title="Notifications" subtitle={unread ? `${unread} unread notification${unread > 1 ? 's' : ''}` : 'You’re all caught up'}>
+        <Button variant="ghost" size="sm" onClick={markAll} disabled={!unread}><CheckCheck className="w-4 h-4" /> Mark all read</Button>
+      </PageHeader>
+
+      <FilterTabs tabs={[{ value: 'all', label: 'All' }, { value: 'unread', label: `Unread${unread ? ` (${unread})` : ''}` }]} active={filter} onChange={setFilter} className="mb-5" />
+
+      {shown.length ? (
+        <div className="space-y-2">
+          {shown.map((n) => {
+            const m = META[n.kind];
+            const Icon = m.icon;
+            return (
+              <Card key={n.id} className={`flex items-start gap-3 transition ${!n.read ? 'border-brand/30 bg-brand/[0.02]' : ''}`}>
+                <span className={`grid place-items-center w-10 h-10 rounded-xl shrink-0 ${m.cls}`}><Icon className="w-5 h-5" /></span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-fg">{n.title}</p>
+                    {!n.read && <span className="w-2 h-2 rounded-full bg-brand" />}
+                  </div>
+                  <p className="text-sm text-fg-muted mt-0.5">{n.body}</p>
+                  <p className="text-xs text-fg-muted mt-1.5">{timeAgo(n.at)}</p>
+                </div>
+                <button onClick={() => toggle(n.id)} className="text-xs font-semibold text-brand hover:underline shrink-0">{n.read ? 'Mark unread' : 'Mark read'}</button>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <EmptyState icon={Bell} title="Nothing here" hint="You have no notifications in this view." />
+      )}
+    </div>
+  );
+}
