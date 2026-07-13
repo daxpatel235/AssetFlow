@@ -28,6 +28,7 @@
 
 ## 📋 Table of Contents
 
+- [Screenshots](#-screenshots)
 - [Features](#-features)
 - [Architecture](#-architecture)
 - [Tech Stack](#-tech-stack)
@@ -43,6 +44,46 @@
 - [Scripts Reference](#-scripts-reference)
 - [Contributing](#-contributing)
 - [License](#-license)
+
+---
+
+## 📸 Screenshots
+
+A quick walkthrough of AssetFlow, from the public landing page through the admin workspace.
+
+### Landing Page
+<p align="center">
+  <img src="docs/screenshots/01-landing.png" alt="AssetFlow landing page" width="100%" />
+</p>
+
+### Sign In
+<p align="center">
+  <img src="docs/screenshots/02-login.png" alt="Sign in screen" width="100%" />
+</p>
+
+### Dashboard
+<p align="center">
+  <img src="docs/screenshots/03-dashboard.png" alt="Admin dashboard with KPI cards and analytics" width="100%" />
+</p>
+
+### Asset Registry
+<p align="center">
+  <img src="docs/screenshots/04-asset-registry.png" alt="Asset registry table with lifecycle status" width="100%" />
+</p>
+
+### Organization
+<p align="center">
+  <img src="docs/screenshots/05-organization.png" alt="Department management cards" width="100%" />
+</p>
+
+### Reports & Analytics
+<p align="center">
+  <img src="docs/screenshots/06-reports.png" alt="Reports and analytics with portfolio metrics" width="100%" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/07-analytics.png" alt="Analytics charts — allocation by department, lifecycle distribution, booking heatmap" width="100%" />
+</p>
 
 ---
 
